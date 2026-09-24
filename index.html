@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>কিউআর কোড জেনারেটর</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#1a2033;--muted:#667085;--border:#dde2ee;--accent:#4f46e5;--accent-t:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--text:#eef0f8;--muted:#9aa3bd;--border:#2a3050;--accent:#818cf8;--accent-t:#0f1220}}
+:root[data-theme="dark"]{--bg:#0f1220;--card:#181c30;--text:#eef0f8;--muted:#9aa3bd;--border:#2a3050;--accent:#818cf8;--accent-t:#0f1220}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Bengali","Hind Siliguri",system-ui,sans-serif;line-height:1.6}
+.wrap{max-width:920px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:8px 0 4px}
+p.sub{margin:0 0 20px;color:var(--muted)}
+.grid{display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:760px){.grid{grid-template-columns:1.1fr .9fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{border:1px solid var(--border);background:transparent;color:var(--text);padding:7px 14px;border-radius:999px;cursor:pointer;font:inherit;font-size:.9rem}
+.tab.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px}
+input[type=text],input[type=url],input[type=password],textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.row>div{flex:1;min-width:120px}
+input[type=color]{width:100%;height:42px;border:1px solid var(--border);border-radius:10px;background:var(--bg);padding:3px}
+input[type=range]{width:100%}
+button.main{margin-top:16px;width:100%;padding:12px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-t);font:inherit;font-weight:600;cursor:pointer}
+.out{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;text-align:center}
+#qr{background:#fff;padding:14px;border-radius:12px;display:none}
+#qr img,#qr canvas{display:block;max-width:100%;height:auto}
+#hint{color:var(--muted)}
+.note{font-size:.8rem;color:var(--muted);margin-top:12px}
+.err{color:#d92d20;font-size:.9rem;margin-top:8px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>কিউআর কোড জেনারেটর</h1>
+  <p class="sub">লিংক, লেখা বা ওয়াইফাই তথ্য লিখুন — সাথে সাথে কিউআর কোড তৈরি হবে।</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-t="link">লিংক</button>
+        <button class="tab" data-t="text">লেখা</button>
+        <button class="tab" data-t="wifi">ওয়াইফাই</button>
+        <button class="tab" data-t="phone">ফোন</button>
+      </div>
+
+      <div id="p-link">
+        <label for="link">ওয়েবসাইট লিংক</label>
+        <input type="url" id="link" placeholder="https://example.com">
+      </div>
+      <div id="p-text" class="hide">
+        <label for="text">যেকোনো লেখা / তথ্য</label>
+        <textarea id="text" placeholder="এখানে লিখুন..."></textarea>
+      </div>
+      <div id="p-wifi" class="hide">
+        <label for="ssid">নেটওয়ার্কের নাম (SSID)</label>
+        <input type="text" id="ssid">
+        <label for="wpass">পাসওয়ার্ড</label>
+        <input type="text" id="wpass">
+        <label for="enc">নিরাপত্তা</label>
+        <select id="enc"><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">পাসওয়ার্ড নেই</option></select>
+      </div>
+      <div id="p-phone" class="hide">
+        <label for="phone">ফোন নম্বর</label>
+        <input type="text" id="phone" placeholder="+8801XXXXXXXXX">
+      </div>
+
+      <div class="row">
+        <div><label for="fg">কোডের রং</label><input type="color" id="fg" value="#000000"></div>
+        <div><label for="bg">ব্যাকগ্রাউন্ড</label><input type="color" id="bgc" value="#ffffff"></div>
+      </div>
+      <label for="size">আকার: <span id="sv">256</span> px</label>
+      <input type="range" id="size" min="128" max="400" step="16" value="256">
+
+      <button class="main" id="go">কিউআর কোড তৈরি করুন</button>
+      <div class="err" id="err"></div>
+    </div>
+
+    <div class="card out">
+      <div id="hint">আপনার কিউআর কোড এখানে দেখা যাবে</div>
+      <div id="qr"></div>
+      <button class="main hide" id="dl" style="max-width:260px">⬇ PNG ডাউনলোড করুন</button>
+      <div class="note hide" id="save">ডাউনলোড না হলে ছবিতে রাইট-ক্লিক (মোবাইলে লং-প্রেস) করে সেভ করুন।</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var mode = "link", dlApi = null;
+try{ if(window.claude&&claude.use) claude.use("downloads").then(function(d){dlApi=d; if(d&&$("qr").style.display==="block") $("dl").classList.remove("hide")}).catch(function(){}) }catch(e){}
+var $ = function(id){return document.getElementById(id)};
+
+document.getElementById("tabs").addEventListener("click", function(e){
+  var t = e.target.dataset.t; if(!t) return;
+  mode = t;
+  document.querySelectorAll(".tab").forEach(function(b){b.classList.toggle("on", b.dataset.t===t)});
+  ["link","text","wifi","phone"].forEach(function(k){$("p-"+k).classList.toggle("hide", k!==t)});
+  render();
+});
+
+function esc(s){return s.replace(/([\\;,:"])/g,"\\$1")}
+
+function getData(){
+  if(mode==="link") return $("link").value.trim();
+  if(mode==="text") return $("text").value.trim();
+  if(mode==="phone"){var p=$("phone").value.trim(); return p?"tel:"+p:""}
+  var s=$("ssid").value.trim(); if(!s) return "";
+  var enc=$("enc").value;
+  return "WIFI:T:"+enc+";S:"+esc(s)+";P:"+esc($("wpass").value)+";;";
+}
+
+function render(){
+  var data = getData(), box = $("qr"), err = $("err");
+  err.textContent = "";
+  box.innerHTML = "";
+  if(!data){box.style.display="none";$("hint").style.display="block";$("save").classList.add("hide");$("dl").classList.add("hide");return}
+  var size = +$("size").value;
+  try{
+    new QRCode(box,{text:data,width:size,height:size,colorDark:$("fg").value,colorLight:$("bgc").value,correctLevel:QRCode.CorrectLevel.M});
+    box.style.display="block";
+    box.style.background=$("bgc").value;
+    $("hint").style.display="none";
+    $("save").classList.remove("hide");
+    if(dlApi) $("dl").classList.remove("hide");
+  }catch(e){
+    box.style.display="none";
+    err.textContent="তথ্য অনেক বড় হয়ে গেছে। অনুগ্রহ করে সংক্ষিপ্ত করুন।";
+  }
+}
+
+["link","text","ssid","wpass","enc","phone","fg","bgc"].forEach(function(id){$(id).addEventListener("input",render)});
+$("size").addEventListener("input",function(){$("sv").textContent=this.value;render()});
+$("go").addEventListener("click",render);
+$("dl").addEventListener("click",function(){
+  var c=$("qr").querySelector("canvas"); if(!c||!dlApi) return;
+  c.toBlob(function(b){
+    if(!b) return;
+    dlApi.save({filename:"qr-code.png",data:b}).catch(function(e){
+      if(e&&e.code!=="declined") $("err").textContent="ডাউনলোড করা যায়নি। ছবিতে লং-প্রেস/রাইট-ক্লিক করে সেভ করুন।";
+    });
+  },"image/png");
+});
+</script>
+</body>
+</html>
